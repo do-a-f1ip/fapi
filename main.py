@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as  starletteHTTPException
+from schemas import Postcreate,PostResponse
 
 app= FastAPI()
 
@@ -46,11 +47,11 @@ def post_page(request:Request,post_id :int):
 
 
 
-@app.get("/api/posts")
+@app.get("/api/posts",response_model=list[PostResponse])
 def get_posts():
     return posts
 
-@app.get("/api/post/{post_id}")
+@app.get("/api/post/{post_id}",response_model=PostResponse)
 def get_post(post_id :int):
     for post in posts:
         if post.get("id")==post_id:
@@ -102,3 +103,19 @@ def validation_exception_handler(request: Request, exception: RequestValidationE
         },
         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
     )
+
+
+
+@app.post("/api/post",response_model=PostResponse,status_code=status.HTTP_201_CREATED)
+def create_post(post:Postcreate):
+    new_id=max(p["id"] for p in posts) + 1 if post else 1
+    newpost={
+        "id":new_id,
+        "author":post.author,
+        "title":post.title,
+        "content":post.content,
+        "date_posted":"May 24 2026 "
+    }
+    posts.append(newpost)
+    return newpost
+
