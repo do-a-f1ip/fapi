@@ -38,8 +38,6 @@ async def lifespan(_app: FastAPI):
     await engine.dispose()
 
 
-
-
 app= FastAPI(lifespan=lifespan)
 
 app.mount("/static",StaticFiles(directory="static"),name="static")
@@ -54,7 +52,7 @@ app.include_router(Posts.router,prefix="/api/post",tags=["Posts"])
 
 @app.get("/",name="home",include_in_schema=False)
 async def Start(request:Request,db:Annotated[AsyncSession,Depends(get_db)]):
-    result=await db.execute(select(models.Post).options(selectinload(models.Post.author)))
+    result=await db.execute(select(models.Post).options(selectinload(models.Post.author)).order_by(models.Post.date_posted.desc()))
     posts=result.scalars().all()
     return templates.TemplateResponse( 
         request,
@@ -98,7 +96,8 @@ async def user_posts(request:Request,user_id:int,db:Annotated[AsyncSession,Depen
     posts=await db.execute(
         select(models.Post)
         .options(selectinload(models.Post.author))
-        .where(models.Post.user_id==user_id))
+        .where(models.Post.user_id==user_id).order_by(models.Post.date_posted.desc()))
+    
     user_post=posts.scalars().all()
 
     return templates.TemplateResponse( 
@@ -107,14 +106,6 @@ async def user_posts(request:Request,user_id:int,db:Annotated[AsyncSession,Depen
         {"posts":user_posts,"user":user,
         "title":f"{user.username}'s Posts"} )
     
-
-
-
-
-
-
-
-
 @app.exception_handler(starletteHTTPException)
 async def general_http_exception_handler(request:Request, exception:starletteHTTPException):
     if request.url.path.startswith("/api"):
