@@ -106,10 +106,29 @@ async def user_posts(request:Request,user_id:int,db:Annotated[AsyncSession,Depen
         {"posts":user_posts,"user":user,
         "title":f"{user.username}'s Posts"} )
     
+
+@app.get("/login", include_in_schema=False)
+async def login_page(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "login.html",
+        {"title": "Login"},
+    )
+
+
+@app.get("/register", include_in_schema=False)
+async def register_page(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "register.html",
+        {"title": "Register"},
+    )
+
+
 @app.exception_handler(starletteHTTPException)
 async def general_http_exception_handler(request:Request, exception:starletteHTTPException):
     if request.url.path.startswith("/api"):
-        return http_exception_handler(request, exception)
+        return await http_exception_handler(request, exception)
     
 
     message=(
@@ -117,9 +136,6 @@ async def general_http_exception_handler(request:Request, exception:starletteHTT
         if exception.detail
         else " An error occurred. Please check your request and try again."
     )
-
-
-
     return templates.TemplateResponse(
         request,
         "error.html",
@@ -137,7 +153,7 @@ async def validation_exception_handler(request: Request, exception: RequestValid
     if request.url.path.startswith("/api"):
         return await request_validation_exception_handler(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            content={"detail": exception.errors()},
+            content={"detail": exception.errors()},                                                                                                 
         )
 
     return templates.TemplateResponse(
