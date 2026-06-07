@@ -43,7 +43,6 @@ class Postbase(BaseModel):
 
 
 class Postcreate(Postbase):
-    user_id:int
     pass
 
 class Postupdate(Postbase):
